@@ -78,7 +78,7 @@ def sousuo(url):
         print '搜索失败'
         return
     if cmp(sousuoname.encode('utf-8'),name)==0:
-        print '搜索到 %s' % sousuoname.encode('utf-8')
+        print '搜索到 《%s》' % sousuoname.encode('utf-8')
         print '是否进行下载？  （y/n）'
         choice = raw_input()
         if choice == 'y':
