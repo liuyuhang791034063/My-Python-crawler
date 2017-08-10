@@ -25,9 +25,9 @@ def fun(url,filename):
     text = soup.find(class_="contentbox").get_text()
     text = text.strip().split('\n')[0]
     text = text.split()
-    filename.write('************'+name.encode('gbk','ignore')+'**************'+'\n')
+    filename.writelines('************'+name.encode('gbk','ignore')+'**************'+'\n\n')
     for i in text:
-        filename.write('  '+ i.encode('gbk','ignore') +'\n')
+        filename.writelines('  '+ i.encode('gbk','ignore')+'\n\n')
     print '%s is ok' % name
     time.sleep(0.05)
 #进一步寻找小说章数
