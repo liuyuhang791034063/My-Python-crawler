@@ -29,7 +29,7 @@ def fun(url,filename):
     for i in text:
         filename.write('  '+ i.encode('gbk','ignore') +'\n')
     print '%s is ok' % name
-    time.sleep(0.25)
+    time.sleep(0.05)
 #进一步寻找小说章数
 def search_data(soup,filename):
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'}
@@ -69,18 +69,41 @@ def sousuo(url):
             rep = urllib2.urlopen(req)
             break
         except BaseException:
-            time.sleep(1)
+            time.sleep(0.05)
     html = rep.read()
     soup = BeautifulSoup(html,'html.parser')
-    sousuoname = soup.find(class_="result-game-item-title-link").get_text()
-    if cmp(str(sousuoname),name):
-        name = name+'.txt'
-        name = name.decode('utf-8')
-        filename = open(name,'a')
-        search_data(soup,filename)
-        filename.close()
-    else:
+    try:
+        sousuoname = soup.find(class_="result-game-item-title-link").get_text().strip().strip('\n')
+    except BaseException:
         print '搜索失败'
+        return
+    if cmp(sousuoname.encode('utf-8'),name)==0:
+        print '搜索到 %s' % sousuoname.encode('utf-8')
+        print '是否进行下载？  （y/n）'
+        choice = raw_input()
+        if choice == 'y':
+            name = (name+'.txt').decode('utf-8')
+            filename = open(name,'a')
+            search_data(soup,filename)
+            filename.close()
+            print '谢谢使用'
+        else :
+            print '谢谢使用'
+    else:
+        print '抱歉，没有找到您搜索的内容'
+        print '根据您搜索内容给您推荐《%s》' % sousuoname.encode('utf-8')
+        print '是否进行下载？  （y/n）'
+        choice =raw_input()
+        if choice == 'y':
+            sousuoname = sousuoname +'.txt'
+            #print sousuoname
+            filename = open(sousuoname, 'a')
+            search_data(soup, filename)
+            filename.close()
+            print '谢谢使用'
+        else:
+            print '谢谢使用'
+
 #主函数
 def main():
 
