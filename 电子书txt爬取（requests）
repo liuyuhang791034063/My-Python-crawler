@@ -1,0 +1,116 @@
+#!/usr/bin/env python
+#coding=utf-8
+
+import urllib
+import urllib2
+import re
+from bs4 import BeautifulSoup
+import string
+import requests
+import time
+
+#进行每一章的爬取和保存
+def fun(url,filename):
+    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'}
+    # 单次连接会出现错误，错误后休息1s后继续尝试连接
+    while True:
+        try:
+            req = requests.get(url,headers=headers)
+            req.encoding='gbk'
+            break
+        except BaseException:
+            time.sleep(0.05)
+    soup = BeautifulSoup(req.text,'html.parser')
+    try:
+        name = soup.find(class_="h1title").h1.get_text()
+    except BaseException:
+        name = '抱歉，搜索不到'
+    text = soup.find(class_="contentbox").get_text()
+    text = text.strip().split('\n')[0]
+    text = text.split()
+    filename.writelines('************'+name.encode('gbk','ignore')+'**************'+'\n\n')
+    for i in text:
+        filename.writelines('  '+i.encode('gbk','ignore')+'\n\n')
+    print '%s is ok' % name
+    time.sleep(0.05)
+#进一步寻找小说章数
+def search_data(soup,filename):
+    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'}
+    wenzhang_base_url = soup.find(class_="result-game-item-title-link")
+    href = re.compile(r'href="(.+?)"')
+    #找到小说章数页面   base url
+    wenzhang_base_url = re.findall(href,str(wenzhang_base_url))[0]
+    #访问小说页面  获取html
+    req = requests.get(wenzhang_base_url,headers=headers)
+    req.encoding='utf-8'
+    #使用Beautifulsoup寻找每一章
+    soup1 = BeautifulSoup(req.text,'html.parser')
+    little_list = soup1.find('ul',class_='mulu_list')
+    little_list = re.findall(re.compile(r'<li>(.+?)</li>'),str(little_list))
+    for i in little_list:
+        href = re.compile(r'href="(.+?)"')
+        href = re.findall(href,i)
+        wenzhang_url = wenzhang_base_url + href[0]
+        #print wenzhang_url
+        fun(wenzhang_url,filename)
+#模拟登陆，搜索是否有着本书
+def sousuo(url):
+    base_url = 'http://so.ybdu.com/cse/search?'
+    name = raw_input('请输入你要寻找的电子书完整名称：')
+    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'}
+    data = urllib.urlencode({
+        'q':name,
+        's':'14402670595036768243',
+        'entry':'1'
+    })
+    real_url = base_url + data
+    #单次连接会出现错误，错误后休息1s后继续尝试连接
+    while True:
+        try:
+            req = requests.get(real_url, headers=headers)
+            req.encoding='utf-8'
+            break
+        except BaseException:
+            time.sleep(0.05)
+    soup = BeautifulSoup(req.text,'html.parser')
+    try:
+        sousuoname = soup.find(class_="result-game-item-title-link").get_text().strip().strip('\n')
+    except BaseException:
+        print '搜索失败'
+        return
+    if cmp(sousuoname.encode('utf-8'),name)==0:
+        print '搜索到 《%s》' % sousuoname.encode('utf-8')
+        print '是否进行下载？  （y/n）'
+        choice = raw_input()
+        if choice == 'y':
+            print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            name = (name+'.txt').decode('utf-8')
+            filename = open(name,'a')
+            search_data(soup,filename)
+            filename.close()
+            print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+            print '谢谢使用'
+        else :
+            print '谢谢使用'
+    else:
+        print '抱歉，没有找到您搜索的内容'
+        print '根据您搜索内容给您推荐《%s》' % sousuoname.encode('utf-8')
+        print '是否进行下载？  （y/n）'
+        choice =raw_input()
+        if choice == 'y':
+            sousuoname = sousuoname +'.txt'
+            filename = open(sousuoname, 'a')
+            search_data(soup, filename)
+            filename.close()
+            print '谢谢使用'
+        else:
+            print '谢谢使用'
+
+#主函数
+def main():
+
+    base_url = 'http://www.ybdu.com/'
+    sousuo(base_url)
+
+if __name__ == '__main__':
+    main()
